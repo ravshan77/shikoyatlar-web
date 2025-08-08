@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Upload, Eye, Phone, User, Building, FileText, Hash } from 'lucide-react';
+import { X, Upload, Eye, Phone, User, FileText, Hash } from 'lucide-react';
 import { Button } from './ui/Button.tsx';
 import { Input } from './ui/Input.tsx';
 import { Select } from './ui/Select.tsx';
@@ -48,12 +48,15 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
   // Initialize form with edit data
   React.useEffect(() => {
     if (editData && isOpen) {
-      setValue('clientName', editData.client_name);
-      setValue('clientPhoneOne', editData.client_phone_one);
-      setValue('clientPhoneTwo', editData.client_phone_two || '');
-      setValue('complaintText', editData.complaint_text);
-      setValue('rentNumber', editData.rent_number);
-      setValue('branchId', editData.branch_id);
+      setValue('client_name', editData.client_name);
+      setValue('client_phone_one', editData.client_phone_one);
+      setValue('client_phone_two', editData.client_phone_two || '');
+      setValue('complaint_text', editData.complaint_text);
+      setValue('rent_number', editData.rent_number);
+      setValue('branch_id', editData.branch_id);
+      setValue('worker_id', editData.worker_id);
+      setValue('worker_name', editData.worker_name);
+      setValue('images', editData.images);
 
       // Load existing images
       const existingImages: ImagePreview[] = editData.images.map(url => ({
@@ -123,7 +126,7 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
   const onFormSubmit = async (data: ComplaintFormData) => {
     const formData: ComplaintFormData = {
       ...data,
-      images: images.map(img => img.file).filter(Boolean) as File[],
+      images: images.map(img => img.isExisting ? img.url : '').filter(Boolean),
     };
 
     const success = await onSubmit(formData);
@@ -149,11 +152,11 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
             <Input
               label="Mijoz ismi"
               icon={<User />}
-              {...register('clientName', {
+              {...register('client_name', {
                 required: 'Mijoz ismini kiriting',
                 minLength: { value: 2, message: 'Kamida 2 ta belgi kiriting' },
               })}
-              error={errors.clientName?.message}
+              error={errors.client_name?.message}
               disabled={isReadOnly}
               placeholder="Mijoz ismini kiriting"
             />
@@ -161,10 +164,10 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
             {/* Branch */}
             <Select
               label="Filial"
-              value={watch('branchId')}
-              onChange={(value) => setValue('branchId', Number(value))}
+              value={watch('branch_id')}
+              onChange={(value) => setValue('branch_id', Number(value))}
               options={branchOptions}
-              error={errors.branchId?.message}
+              error={errors.branch_id?.message}
               disabled={isReadOnly}
               placeholder="Filialni tanlang"
             />
@@ -175,7 +178,7 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
             <Input
               label="Asosiy telefon raqam"
               icon={<Phone />}
-              {...register('clientPhoneOne', {
+              {...register('client_phone_one', {
                 required: 'Telefon raqamni kiriting',
                 pattern: {
                   value: /^\+998 \d{2} \d{3} \d{2} \d{2}$/,
@@ -184,9 +187,9 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
               })}
               onChange={(e) => {
                 const formatted = formatPhoneInput(e.target.value);
-                setValue('clientPhoneOne', formatted);
+                setValue('client_phone_one', formatted);
               }}
-              error={errors.clientPhoneOne?.message}
+              error={errors.client_phone_one?.message}
               disabled={isReadOnly}
               placeholder="+998 XX XXX XX XX"
             />
@@ -195,12 +198,12 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
             <Input
               label="Qo'shimcha telefon raqam"
               icon={<Phone />}
-              {...register('clientPhoneTwo')}
+              {...register('client_phone_two')}
               onChange={(e) => {
                 const formatted = formatPhoneInput(e.target.value);
-                setValue('clientPhoneTwo', formatted);
+                setValue('client_phone_two', formatted);
               }}
-              error={errors.clientPhoneTwo?.message}
+              error={errors.client_phone_two?.message}
               disabled={isReadOnly}
               placeholder="+998 XX XXX XX XX (ixtiyoriy)"
             />
@@ -210,8 +213,8 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
           <Input
             label="Ijara raqami"
             icon={<Hash />}
-            {...register('rentNumber')}
-            error={errors.rentNumber?.message}
+            {...register('rent_number')}
+            error={errors.rent_number?.message}
             disabled={isReadOnly}
             placeholder="Ijara raqamini kiriting (ixtiyoriy)"
             helperText="Agar mavjud bo'lsa, ijara raqamini kiriting"
@@ -224,19 +227,19 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({
               Shikoyat matni
             </label>
             <textarea
-              {...register('complaintText', {
+              {...register('complaint_text', {
                 required: 'Shikoyat matnini kiriting',
                 minLength: { value: 10, message: 'Kamida 10 ta belgi kiriting' },
               })}
               rows={4}
               className={`block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 ${
-                errors.complaintText ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                errors.complaint_text ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
               }`}
               disabled={isReadOnly}
               placeholder="Shikoyat matnini batafsil yozing..."
             />
-            {errors.complaintText && (
-              <p className="text-sm text-red-600">{errors.complaintText.message}</p>
+            {errors.complaint_text && (
+              <p className="text-sm text-red-600">{errors.complaint_text.message}</p>
             )}
           </div>
 

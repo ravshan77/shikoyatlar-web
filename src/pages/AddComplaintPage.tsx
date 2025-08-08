@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Upload, X, Eye, User, Phone, Building, FileText, Hash } from 'lucide-react';
+import { ArrowLeft, Upload, X, Eye, User, Phone, FileText, Hash } from 'lucide-react';
 import { Button } from '../components/ui/Button.tsx';
 import { Input } from '../components/ui/Input.tsx';
 import { Select } from '../components/ui/Select.tsx';
@@ -25,22 +25,10 @@ export const AddComplaintPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { userSession } = useComplaintStore();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useForm<ComplaintFormData>();
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ComplaintFormData>();
 
   // Fetch branches
-  const { 
-    data: branchesData, 
-    isLoading: isLoadingBranches 
-  } = useQuery({
-    queryKey: ['branches'],
-    queryFn: apiService.getBranches,
-  });
+  const {  data: branchesData, isLoading: isLoadingBranches } = useQuery({ queryKey: ['branches'], queryFn: apiService.getBranches });
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -65,9 +53,7 @@ export const AddComplaintPage: React.FC = () => {
     }
   };
 
-  const handleImageRemove = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const handleImageRemove = (index: number) => setImages(prev => prev.filter((_, i) => i !== index));
 
   const formatPhoneInput = (value: string) => {
     // Remove all non-digits
@@ -105,12 +91,12 @@ export const AddComplaintPage: React.FC = () => {
 
       // Prepare complaint data
       const complaintRequest = {
-        client_name: data.clientName,
-        client_phone_one: data.clientPhoneOne,
-        client_phone_two: data.clientPhoneTwo || null,
-        complaint_text: data.complaintText,
-        rent_number: data.rentNumber || '',
-        branch_id: data.branchId,
+        client_name: data.client_name,
+        client_phone_one: data.client_phone_one,
+        client_phone_two: data.client_phone_two || null,
+        complaint_text: data.complaint_text,
+        rent_number: data.rent_number || '',
+        branch_id: data.branch_id,
         images: imageUrls,
         worker_id: userSession.workerId,
         worker_name: userSession.workerName,
@@ -133,9 +119,7 @@ export const AddComplaintPage: React.FC = () => {
     }
   };
 
-  const handleGoBack = () => {
-    navigate('/dashboard');
-  };
+  const handleGoBack = () => navigate('/dashboard')
 
   if (isLoadingBranches) {
     return <LoadingSpinner fullScreen message="Ma'lumotlar yuklanmoqda..." />;
@@ -190,21 +174,21 @@ export const AddComplaintPage: React.FC = () => {
                   <Input
                     label="Mijoz ismi *"
                     icon={<User />}
-                    {...register('clientName', {
+                    {...register('client_name', {
                       required: 'Mijoz ismini kiriting',
                       minLength: { value: 2, message: 'Kamida 2 ta belgi kiriting' },
                     })}
-                    error={errors.clientName?.message}
+                    error={errors.client_name?.message}
                     placeholder="Mijoz ismini kiriting"
                   />
 
                   {/* Branch */}
                   <Select
                     label="Filial *"
-                    value={watch('branchId')}
-                    onChange={(value) => setValue('branchId', Number(value))}
+                    value={watch('branch_id')}
+                    onChange={(value) => setValue('branch_id', Number(value))}
                     options={branchOptions}
-                    error={errors.branchId?.message}
+                    error={errors.branch_id?.message}
                     placeholder="Filialni tanlang"
                   />
 
@@ -212,7 +196,7 @@ export const AddComplaintPage: React.FC = () => {
                   <Input
                     label="Asosiy telefon raqam *"
                     icon={<Phone />}
-                    {...register('clientPhoneOne', {
+                    {...register('client_phone_one', {
                       required: 'Telefon raqamni kiriting',
                       pattern: {
                         value: /^\+998 \d{2} \d{3} \d{2} \d{2}$/,
@@ -221,9 +205,9 @@ export const AddComplaintPage: React.FC = () => {
                     })}
                     onChange={(e) => {
                       const formatted = formatPhoneInput(e.target.value);
-                      setValue('clientPhoneOne', formatted);
+                      setValue('client_phone_one', formatted);
                     }}
-                    error={errors.clientPhoneOne?.message}
+                    error={errors.client_phone_one?.message}
                     placeholder="+998 XX XXX XX XX"
                   />
 
@@ -231,12 +215,12 @@ export const AddComplaintPage: React.FC = () => {
                   <Input
                     label="Qo'shimcha telefon raqam"
                     icon={<Phone />}
-                    {...register('clientPhoneTwo')}
+                    {...register('client_phone_two')}
                     onChange={(e) => {
                       const formatted = formatPhoneInput(e.target.value);
-                      setValue('clientPhoneTwo', formatted);
+                      setValue('client_phone_two', formatted);
                     }}
-                    error={errors.clientPhoneTwo?.message}
+                    error={errors.client_phone_two?.message}
                     placeholder="+998 XX XXX XX XX (ixtiyoriy)"
                   />
                 </div>
@@ -253,8 +237,8 @@ export const AddComplaintPage: React.FC = () => {
                   <Input
                     label="Ijara raqami"
                     icon={<Hash />}
-                    {...register('rentNumber')}
-                    error={errors.rentNumber?.message}
+                    {...register('rent_number')}
+                    error={errors.rent_number?.message}
                     placeholder="Ijara raqamini kiriting (ixtiyoriy)"
                     helperText="Agar mavjud bo'lsa, ijara raqamini kiriting"
                   />
@@ -267,18 +251,18 @@ export const AddComplaintPage: React.FC = () => {
                     Shikoyat matni *
                   </label>
                   <textarea
-                    {...register('complaintText', {
+                    {...register('complaint_text', {
                       required: 'Shikoyat matnini kiriting',
                       minLength: { value: 10, message: 'Kamida 10 ta belgi kiriting' },
                     })}
                     rows={6}
                     className={`block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 resize-none ${
-                      errors.complaintText ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                      errors.complaint_text ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                     }`}
                     placeholder="Shikoyat matnini batafsil yozing..."
                   />
-                  {errors.complaintText && (
-                    <p className="text-sm text-red-600">{errors.complaintText.message}</p>
+                  {errors.complaint_text && (
+                    <p className="text-sm text-red-600">{errors.complaint_text.message}</p>
                   )}
                 </div>
               </div>

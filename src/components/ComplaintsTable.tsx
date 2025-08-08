@@ -45,15 +45,15 @@ export const ComplaintsTable: React.FC<ComplaintsTableProps> = ({
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('uz-UZ', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleString('uz-UZ', {
+  //     year: 'numeric',
+  //     month: 'short',
+  //     day: 'numeric',
+  //     hour: '2-digit',
+  //     minute: '2-digit',
+  //   });
+  // };
 
   const truncateText = (text: string, maxLength: number = 50) => {
     if (text.length <= maxLength) return text;
@@ -87,7 +87,7 @@ export const ComplaintsTable: React.FC<ComplaintsTableProps> = ({
       label: 'Shikoyat matni',
       render: (value: string) => (
         <div className="max-w-xs">
-          <p className="text-sm text-gray-900" title={value}>
+          <p className="text-sm text-gray-900 truncate" title={value}>
             {truncateText(value)}
           </p>
         </div>
@@ -105,7 +105,7 @@ export const ComplaintsTable: React.FC<ComplaintsTableProps> = ({
       label: 'Sana',
       width: '140px',
       render: (value: string) => (
-        <span className="text-sm text-gray-600">{formatDate(value)}</span>
+        <span className="text-sm text-gray-600">{value}</span>
       ),
     },
     {

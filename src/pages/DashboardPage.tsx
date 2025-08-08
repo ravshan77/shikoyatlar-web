@@ -93,7 +93,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-2">
           <div className="flex justify-between items-center py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -128,8 +128,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
+      <main className="max-w-[95%] mx-auto px-4 sm:px-4 lg:px-2 py-8">
+        <div className="space-y-">
           {/* Filters */}
           <ComplaintFiltersComponent
             filters={filters}

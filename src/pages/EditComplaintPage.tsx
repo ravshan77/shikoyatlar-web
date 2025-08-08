@@ -1,16 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Eye, Edit, Upload, X, User, Phone, Building, FileText, Hash } from 'lucide-react';
-import { Button } from '../components/ui/Button.tsx';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '../components/ui/Input.tsx';
-import { Select } from '../components/ui/Select.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
-import { LoadingSpinner } from '../components/LoadingSpinner.tsx';
+import { Button } from '../components/ui/Button.tsx';
+import { Select } from '../components/ui/Select.tsx';
 import { apiService } from '../services/apiService.ts';
+import React, { useState, useRef, useEffect } from 'react';
+import { ComplaintFormData } from '../types/complaint.types.ts';
+import { LoadingSpinner } from '../components/LoadingSpinner.tsx';
 import { useComplaintStore } from '../stores/useComplaintStore.ts';
-import { ComplaintFormData, ComplaintResponse } from '../types/complaint.types.ts';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Eye, Edit, Upload, X, User, Phone, FileText, Hash } from 'lucide-react';
 
 interface ImagePreview {
   file?: File;
@@ -31,54 +31,41 @@ export const EditComplaintPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { userSession } = useComplaintStore();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-    watch,
-  } = useForm<ComplaintFormData>();
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ComplaintFormData>();
 
   // Fetch branches
-  const { 
-    data: branchesData, 
-    isLoading: isLoadingBranches 
-  } = useQuery({
+  const { data: branchesData, isLoading: isLoadingBranches } = useQuery({
     queryKey: ['branches'],
     queryFn: apiService.getBranches,
   });
 
   // Fetch specific complaint
-  const { 
-    data: complaintsData, 
-    isLoading: isLoadingComplaint 
-  } = useQuery({
+  const {  data: complaintsData, isLoading: isLoadingComplaint } = useQuery({
     queryKey: ['complaint', id],
     queryFn: async () => {
-      const result = await apiService.getComplaints(1, null, null);
+      const result = await apiService.getComplaint(Number(id));
       return result;
     },
     enabled: !!id,
   });
 
-  const complaint = complaintsData?.data?.find(c => c.id === Number(id));
+  const complaint = complaintsData?.data
 
   // Initialize form with complaint data
   useEffect(() => {
     if (complaint) {
-      setValue('clientName', complaint.client_name);
-      setValue('clientPhoneOne', complaint.client_phone_one);
-      setValue('clientPhoneTwo', complaint.client_phone_two || '');
-      setValue('complaintText', complaint.complaint_text);
-      setValue('rentNumber', complaint.rent_number);
-      setValue('branchId', complaint.branch_id);
+      setValue('client_name', complaint.client_name);
+      setValue('client_phone_one', complaint.client_phone_one);
+      setValue('client_phone_two', complaint.client_phone_two || '');
+      setValue('complaint_text', complaint.complaint_text);
+      setValue('rent_number', complaint.rent_number);
+      setValue('branch_id', complaint.branch_id);
+      setValue('worker_id', complaint.worker_id);
+      setValue('worker_name', complaint.worker_name);
+      setValue('images', complaint.images);
 
       // Load existing images
-      const existingImages: ImagePreview[] = complaint.images.map(url => ({
-        url,
-        isExisting: true,
-      }));
+      const existingImages: ImagePreview[] = complaint.images.map(url => ({ url, isExisting: true }));
       setImages(existingImages);
     }
   }, [complaint, setValue]);
@@ -158,12 +145,12 @@ export const EditComplaintPage: React.FC = () => {
 
       // Prepare complaint data
       const complaintRequest = {
-        client_name: data.clientName,
-        client_phone_one: data.clientPhoneOne,
-        client_phone_two: data.clientPhoneTwo || null,
-        complaint_text: data.complaintText,
-        rent_number: data.rentNumber || '',
-        branch_id: data.branchId,
+        client_name: data.client_name,
+        client_phone_one: data.client_phone_one,
+        client_phone_two: data.client_phone_two || null,
+        complaint_text: data.complaint_text,
+        rent_number: data.rent_number || '',
+        branch_id: data.branch_id,
         images: allImages,
         worker_id: userSession.workerId,
         worker_name: userSession.workerName,
@@ -231,11 +218,7 @@ export const EditComplaintPage: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                onClick={handleGoBack}
-                className="flex items-center space-x-2 mr-4"
-              >
+              <Button variant="ghost" onClick={handleGoBack} className="flex items-center space-x-2 mr-4">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Orqaga</span>
               </Button>
@@ -252,11 +235,7 @@ export const EditComplaintPage: React.FC = () => {
 
             {/* Mode Toggle (only for non-completed complaints) */}
             {!isCompleted && (
-              <Button
-                variant="secondary"
-                onClick={toggleMode}
-                className="flex items-center space-x-2"
-              >
+              <Button variant="secondary" onClick={toggleMode} className="flex items-center space-x-2" >
                 {mode === 'edit' ? <Eye className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                 <span>
                   {mode === 'edit' ? 'Ko\'rish rejimi' : 'Tahrirlash rejimi'}
@@ -307,11 +286,11 @@ export const EditComplaintPage: React.FC = () => {
                   <Input
                     label="Mijoz ismi"
                     icon={<User />}
-                    {...register('clientName', {
+                    {...register('client_name', {
                       required: 'Mijoz ismini kiriting',
                       minLength: { value: 2, message: 'Kamida 2 ta belgi kiriting' },
                     })}
-                    error={errors.clientName?.message}
+                    error={errors.client_name?.message}
                     disabled={isReadOnly}
                     placeholder="Mijoz ismini kiriting"
                   />
@@ -319,10 +298,10 @@ export const EditComplaintPage: React.FC = () => {
                   {/* Branch */}
                   <Select
                     label="Filial"
-                    value={watch('branchId')}
-                    onChange={(value) => setValue('branchId', Number(value))}
+                    value={watch('branch_id')}
+                    onChange={(value) => setValue('branch_id', Number(value))}
                     options={branchOptions}
-                    error={errors.branchId?.message}
+                    error={errors.branch_id?.message}
                     disabled={isReadOnly}
                     placeholder="Filialni tanlang"
                   />
@@ -331,7 +310,7 @@ export const EditComplaintPage: React.FC = () => {
                   <Input
                     label="Asosiy telefon raqam"
                     icon={<Phone />}
-                    {...register('clientPhoneOne', {
+                    {...register('client_phone_one', {
                       required: 'Telefon raqamni kiriting',
                       pattern: {
                         value: /^\+998 \d{2} \d{3} \d{2} \d{2}$/,
@@ -341,10 +320,10 @@ export const EditComplaintPage: React.FC = () => {
                     onChange={(e) => {
                       if (!isReadOnly) {
                         const formatted = formatPhoneInput(e.target.value);
-                        setValue('clientPhoneOne', formatted);
+                        setValue('client_phone_one', formatted);
                       }
                     }}
-                    error={errors.clientPhoneOne?.message}
+                    error={errors.client_phone_one?.message}
                     disabled={isReadOnly}
                     placeholder="+998 XX XXX XX XX (ixtiyoriy)"
                   />
@@ -362,8 +341,8 @@ export const EditComplaintPage: React.FC = () => {
                   <Input
                     label="Ijara raqami"
                     icon={<Hash />}
-                    {...register('rentNumber')}
-                    error={errors.rentNumber?.message}
+                    {...register('rent_number')}
+                    error={errors.rent_number?.message}
                     disabled={isReadOnly}
                     placeholder="Ijara raqamini kiriting (ixtiyoriy)"
                     helperText="Agar mavjud bo'lsa, ijara raqamini kiriting"
@@ -377,19 +356,19 @@ export const EditComplaintPage: React.FC = () => {
                     Shikoyat matni
                   </label>
                   <textarea
-                    {...register('complaintText', {
+                    {...register('complaint_text', {
                       required: 'Shikoyat matnini kiriting',
                       minLength: { value: 10, message: 'Kamida 10 ta belgi kiriting' },
                     })}
                     rows={6}
                     className={`block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 resize-none ${
-                      errors.complaintText ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                      errors.complaint_text ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                     } ${isReadOnly ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                     disabled={isReadOnly}
                     placeholder="Shikoyat matnini batafsil yozing..."
                   />
-                  {errors.complaintText && (
-                    <p className="text-sm text-red-600">{errors.complaintText.message}</p>
+                  {errors.complaint_text && (
+                    <p className="text-sm text-red-600">{errors.complaint_text.message}</p>
                   )}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { authApiService } from '../services/authApiService.ts';
 import { TwoFactorAuth } from '../components/TwoFactorAuth.tsx';
-import { apiService } from '../services/apiService.ts';
 import { useComplaintStore } from '../stores/useComplaintStore.ts';
 
 interface AuthPageProps {
@@ -15,7 +15,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     setIsLoading(true);
     
     try {
-      const response = await apiService.authenticate(code);
+      const response = await authApiService.authenticate(code);
       
       if (response.status && response.data) {
         // Save user session
@@ -23,6 +23,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           workerId: response.data.worker_id,
           workerName: response.data.worker_name,
         });
+        
+        sessionStorage.setItem('userToken', response.data.token)
         
         onAuthenticated();
         return true;

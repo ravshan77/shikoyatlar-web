@@ -1,15 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import {
-  AuthResponse,
-  BranchesResult,
-  ComplaintsResult,
-  ComplaintRequest,
-  ImageUploadResponse,
-} from '../types/complaint.types.ts';
+import { BranchesResult, ComplaintsResult, ComplaintRequest, ImageUploadResponse, ComplaintResult } from '../types/complaint.types.ts';
 
 class ApiService {
   private httpClient: AxiosInstance;
-  private readonly baseUrl = 'https://garant-hr.uz/api';
+  // private readonly baseUrl = 'https://garant-hr.uz/api';
+  private readonly baseUrl = 'http://10.100.104.120:8008/api';
 
   constructor() {
     this.httpClient = axios.create({
@@ -20,27 +15,15 @@ class ApiService {
       },
     });
 
-    this.setBasicAuthentication('login', 'password');
+    this.setAuthorizationHeader();
   }
 
-  private setBasicAuthentication(username: string, password: string): void {
-    const credentials = btoa(`${username}:${password}`);
-    this.httpClient.defaults.headers['Authorization'] = `Basic ${credentials}`;
+  private setAuthorizationHeader(): void {
+    const token = sessionStorage.getItem('userToken');
+    this.httpClient.defaults.headers['Authorization'] = `Bearer ${token}`;
   }
 
-  async authenticate(code: string): Promise<AuthResponse> {
-    try {
-      const response: AxiosResponse<AuthResponse> = await this.httpClient.post(
-        '/call-center-complaint-code',
-        { code }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Authentication error:', error);
-      throw error;
-    }
-  }
-
+  // get complaints list
   async getComplaints(
     currentPage: number = 1,
     status: string | null = null,
@@ -52,10 +35,7 @@ class ApiService {
         branch_id: branchId === 0 ? null : branchId,
       };
 
-      const response: AxiosResponse<ComplaintsResult> = await this.httpClient.post(
-        `/call-center-complaint-index?page=${currentPage}`,
-        filterData
-      );
+      const response: AxiosResponse<ComplaintsResult> = await this.httpClient.post(`/call-center-complaint-index?page=${currentPage}`, filterData);
 
       return response.data;
     } catch (error) {
@@ -64,6 +44,18 @@ class ApiService {
     }
   }
 
+  // show
+  async getComplaint(id: number ): Promise<ComplaintResult> {
+    try {
+      const response: AxiosResponse<ComplaintResult> = await this.httpClient.get(`/call-center-complaint-index-show/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get complaints error:', error);
+      throw error;
+    }
+  }
+
+  // update image
   async uploadImage(file: File): Promise<string | null> {
     try {
       const formData = new FormData();
@@ -86,6 +78,7 @@ class ApiService {
     }
   }
 
+  // get branches
   async getBranches(): Promise<BranchesResult> {
     try {
       const response: AxiosResponse<BranchesResult> = await this.httpClient.get(
@@ -98,6 +91,7 @@ class ApiService {
     }
   }
 
+  // create complaint
   async createComplaint(complaint: ComplaintRequest): Promise<boolean> {
     try {
       const response = await this.httpClient.post('/call-center-complaint', complaint);
@@ -108,6 +102,7 @@ class ApiService {
     }
   }
 
+  // update complaint
   async updateComplaint(id: number, complaint: ComplaintRequest): Promise<boolean> {
     try {
       const response = await this.httpClient.put(`/call-center-complaint/${id}`, complaint);

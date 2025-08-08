@@ -28,13 +28,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, isAuthenticat
 };
 
 export const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const is_authenticated = !!sessionStorage.getItem('userToken')
+  const [isAuthenticated, setIsAuthenticated] = useState(is_authenticated);
   const { userSession, reset } = useComplaintStore();
 
   // Check if user is already authenticated on app start
   useEffect(() => {
     if (userSession) {
       setIsAuthenticated(true);
+      window.location.reload(); // Reload to ensure the session is valid
     }
   }, [userSession]);
 

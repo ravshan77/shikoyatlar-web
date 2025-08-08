@@ -4,6 +4,7 @@ export interface AuthResponse {
   data: {
     worker_id: number;
     worker_name: string;
+    token: string; // Assuming the token is part of the response
   } | null;
 }
 
@@ -53,6 +54,11 @@ export interface ComplaintsResult {
   pagination: PaginationInfo;
 }
 
+export interface ComplaintResult {
+  status: boolean;
+  data: ComplaintResponse;
+}
+
 export interface BranchesResult {
   status: boolean;
   data: BranchItem[];
@@ -66,6 +72,7 @@ export interface ImageUploadResponse {
 export interface UserSession {
   workerId: number;
   workerName: string;
+  // token: string; // Assuming the token is part of the user session
 }
 
 export interface ComplaintFilters {
@@ -76,11 +83,13 @@ export interface ComplaintFilters {
 export type ComplaintStatus = 'in_progress' | 'completed';
 
 export interface ComplaintFormData {
-  clientName: string;
-  clientPhoneOne: string;
-  clientPhoneTwo: string;
-  complaintText: string;
-  rentNumber: string;
-  branchId: number;
-  images: File[];
+  client_name: string;
+  client_phone_one: string;
+  client_phone_two: string;
+  complaint_text: string;
+  rent_number: string;
+  branch_id: number;
+  images: string[];
+  worker_id: number;
+  worker_name: string;
 }

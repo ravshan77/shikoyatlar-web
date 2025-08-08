@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { LogOut, User } from 'lucide-react';
 import { ComplaintFiltersComponent } from '../components/ComplaintFilters.tsx';
 import { ComplaintsTable } from '../components/ComplaintsTable.tsx';
-import { ComplaintForm } from '../components/ComplaintForm.tsx';
 import { Button } from '../components/ui/Button.tsx';
-import { LoadingSpinner } from '../components/LoadingSpinner';
 import { apiService } from '../services/apiService.ts';
 import { useComplaintStore } from '../stores/useComplaintStore.ts';
-import { ComplaintResponse, ComplaintFormData, BranchItem } from '../types/complaint.types.ts';
+import { ComplaintResponse } from '../types/complaint.types.ts';
 
 interface DashboardPageProps {
   onLogout: () => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [selectedComplaint, setSelectedComplaint] = useState<ComplaintResponse | null>(null);
-  const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
+  const navigate = useNavigate();
 
   const {
     userSession,
@@ -29,8 +25,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     autoRefresh,
     setAutoRefresh,
   } = useComplaintStore();
-
-  const queryClient = useQueryClient();
 
   // Fetch branches
   const { data: branchesData = { status: false, data: [] } } = useQuery({
@@ -50,53 +44,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     refetchInterval: autoRefresh ? 30000 : false, // Auto-refresh every 30 seconds
   });
 
-  // Handle complaint form submission
-  const handleComplaintSubmit = async (formData: ComplaintFormData): Promise<boolean> => {
-    if (!userSession) return false;
-
-    setIsSubmittingComplaint(true);
-
-    try {
-      // Upload images first
-      const imageUrls: string[] = [];
-      for (const file of formData.images) {
-        const url = await apiService.uploadImage(file);
-        if (url) imageUrls.push(url);
-      }
-
-      // Prepare complaint data
-      const complaintRequest = {
-        client_name: formData.clientName,
-        client_phone_one: formData.clientPhoneOne,
-        client_phone_two: formData.clientPhoneTwo || null,
-        complaint_text: formData.complaintText,
-        rent_number: formData.rentNumber || '',
-        branch_id: formData.branchId,
-        images: imageUrls,
-        worker_id: userSession.workerId,
-        worker_name: userSession.workerName,
-      };
-
-      // Submit complaint
-      const success = formMode === 'edit' && selectedComplaint
-        ? await apiService.updateComplaint(selectedComplaint.id, complaintRequest)
-        : await apiService.createComplaint(complaintRequest);
-
-      if (success) {
-        // Refresh complaints data
-        await refetchComplaints();
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error submitting complaint:', error);
-      return false;
-    } finally {
-      setIsSubmittingComplaint(false);
-    }
-  };
-
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -112,29 +59,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     await refetchComplaints();
   };
 
-  // Handle add complaint
+  // Handle add complaint - navigate to add page
   const handleAddComplaint = () => {
-    setFormMode('create');
-    setSelectedComplaint(null);
-    setIsFormOpen(true);
+    navigate('/complaints/add');
   };
 
-  // Handle view complaint
+  // Handle view complaint - navigate to edit page in view mode
   const handleViewComplaint = (complaint: ComplaintResponse) => {
-    setFormMode('view');
-    setSelectedComplaint(complaint);
-    setIsFormOpen(true);
+    navigate(`/complaints/edit/${complaint.id}?mode=view`);
   };
 
-  // Handle edit complaint
+  // Handle edit complaint - navigate to edit page
   const handleEditComplaint = (complaint: ComplaintResponse) => {
     if (complaint.status === 'completed') {
       alert('Yakunlangan shikoyatni tahrirlash mumkin emas!');
       return;
     }
-    setFormMode('edit');
-    setSelectedComplaint(complaint);
-    setIsFormOpen(true);
+    navigate(`/complaints/edit/${complaint.id}`);
   };
 
   // Handle logout
@@ -144,8 +85,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   };
 
-  const branches: BranchItem[] = branchesData.data || [];
-  const complaints: ComplaintResponse[] = complaintsData?.data || [];
+  const branches = branchesData.data || [];
+  const complaints = complaintsData?.data || [];
   const pagination = complaintsData?.pagination || null;
 
   return (
@@ -212,20 +153,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           />
         </div>
       </main>
-
-      {/* Complaint Form Modal */}
-      <ComplaintForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setSelectedComplaint(null);
-        }}
-        onSubmit={handleComplaintSubmit}
-        branches={branches}
-        isLoading={isSubmittingComplaint}
-        editData={selectedComplaint}
-        mode={formMode}
-      />
     </div>
   );
 };
